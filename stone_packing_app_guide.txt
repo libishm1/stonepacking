@@ -1,0 +1,317 @@
+🚧 StonePacking-3JS
+A Three.js Web App for Procedural 3D Packing of Randomly Scaled Dodecahedrons
+
+This project ports my original StonePacking-3D (Python) logic into a browser-friendly TypeScript + Three.js implementation, using instanced rendering, a spatial grid, and strict Power-of-Ten coding principles to guarantee clarity and performance.
+
+This README is also a Cursor / Codex instruction anchor.
+Any code generated must follow the constraints defined below.
+
+🎯 Project Goal
+
+Create a lightweight web tool that:
+
+Packs N randomly-scaled dodecahedrons inside a 3D container box
+
+Avoids overlaps using bounding spheres + a spatial grid
+
+Runs efficiently in the browser
+
+Renders with Three.js InstancedMesh
+
+Provides UI controls for count, scale range, container size
+
+Uses deterministic, predictable architecture suitable for expanding later
+
+Allows exporting or screenshotting scenes in future versions
+
+This project is intended to be modular, auditable, and simple enough to extend.
+
+🧩 Architecture Overview
+Strict Separation of Concerns
+stonepacking-3js/
+│
+├── index.html
+├── package.json
+├── vite.config.ts
+│
+└── src/
+     ├── main.ts        # Bootstraps UI + rendering + packing
+     ├── scene.ts       # Camera, lights, renderer, container box & InstancedMesh
+     ├── packing.ts     # Packing algorithm (NO Three.js imports allowed)
+     ├── grid.ts        # Spatial grid used by packing.ts
+     ├── ui.ts          # Sliders, inputs, event handlers
+     ├── types.d.ts     # Shared interfaces (Container, PackedObject, etc.)
+     └── utils.ts       # Optional helpers (seeded RNG, clamping, vectors)
+
+
+Codex Rule:
+
+Never mix rendering logic inside packing.ts.
+Never use Three.js classes inside logic files.
+Keep modules single-purpose.
+
+🧠 Core Algorithm Specification (Cursor must follow exactly)
+1. Object Definition
+
+Each packed item is a dodecahedron with:
+
+Uniform scale (scale)
+
+Bounding sphere (radius = BASE_RADIUS * scale)
+
+Quaternion rotation
+
+Position inside container
+
+2. Placement Strategy
+
+For each object:
+
+Generate random rotation + scale
+
+Randomly sample a position inside container
+
+Check container boundary constraints
+
+Check collisions using neighbor cells in spatial grid
+
+If valid → place
+
+If invalid → retry (up to MAX_ATTEMPTS)
+
+Fail gracefully if placement not possible
+
+3. Collision Detection
+
+Must use:
+
+Bounding spheres (no mesh-mesh intersection)
+
+Spatial grid acceleration (avoid O(n²))
+
+Neighbor cell lookup only
+
+4. Power-of-Ten Software Principles
+
+Enforce:
+
+No deep nesting (>2 levels)
+
+Small, pure functions
+
+Fail-fast returns
+
+No recursion
+
+No clever magical shortcuts
+
+All state transitions explicit
+
+All loops bounded
+
+Predictable behavior
+
+Maintain clarity even at the cost of performance
+
+🎨 Rendering Specification (Three.js)
+1. Use InstancedMesh
+
+One dodecahedron geometry → reused for all objects:
+
+const mesh = new THREE.InstancedMesh(
+    dodecaGeometry,
+    material,
+    count
+);
+
+2. Compose instance transforms:
+matrix.compose(position, quaternion, new THREE.Vector3(scale, scale, scale));
+mesh.setMatrixAt(i, matrix);
+
+3. A wireframe container box must be visible
+
+Useful for debugging the packing.
+
+4. Use r160+ Three.js features
+
+No deprecated APIs like Geometry.
+
+🎛️ UI Specification
+
+The app must include inputs for:
+
+Object count (default 100)
+
+Min scale (0.3)
+
+Max scale (1.2)
+
+Container dimensions or preset sizes
+
+Generate button
+
+UI should be placed in a simple HTML panel or div.
+UI code lives in ui.ts only.
+
+🧪 Test Mode
+
+Add a keybinding or console command:
+
+window.TEST_PACK = () => {
+  const result = packObjects(defaultParams);
+  console.log(result.length, "objects packed");
+};
+
+
+So packing logic can be tested independently of rendering.
+
+🚫 Codex / Cursor MUST NOT DO THE FOLLOWING
+
+These rules are strict. They exist because Codex frequently derails projects of this type.
+
+1. No combining logic + rendering
+
+Never import THREE.* into packing.ts, grid.ts, or logic modules.
+
+2. No unbounded loops
+
+Must always include:
+
+for (let attempt = 0; attempt < params.maxAttempts; attempt++)
+
+3. No deep nesting
+
+No code like:
+
+if (...) {
+   if (...) {
+      for (...) {
+         if (...) {
+
+
+Instead split into small functions.
+
+4. No physics engines
+
+Not in v1 (future optional add-on).
+
+5. No rewriting existing files unless asked
+
+Codex should extend small blocks, not wipe a file.
+
+6. No untyped any
+
+Use explicit TypeScript interfaces from types.d.ts.
+
+7. No global state creep
+
+State must be passed explicitly.
+
+⚙️ Spatial Grid Rules
+
+To avoid quadratic collision checks:
+
+cellSize ≈ average object radius * 2
+
+Each cell stores references to objects inside it
+
+Collision test inspects only the current cell + 26 neighbors
+
+Grid lives in grid.ts
+
+Grid responsibilities:
+
+Convert position → cell index
+
+Insert object into grid
+
+Retrieve neighbors
+
+Perform safe bounds checks
+
+🧱 Container Rules
+
+Container is axis-aligned:
+
+{
+  width: number;
+  height: number;
+  depth: number;
+}
+
+
+Boundary check must be conservative using radius.
+
+🧬 Randomness
+
+For reproducibility, internally we may switch to a seeded RNG.
+Until then: Math.random() is fine.
+
+🏗️ Step-by-Step Build Plan
+
+Cursor can follow this exact build sequence:
+
+Phase 1 — Scaffold
+
+Create Vite + TypeScript + Three.js template
+
+Show one spinning dodecahedron
+
+Phase 2 — Logic Layer
+
+Implement packing.ts
+
+Implement grid.ts
+
+Add types.d.ts
+
+Phase 3 — Rendering Layer
+
+Add container box
+
+Add instanced dodecahedron rendering
+
+Phase 4 — UI Layer
+
+Add sliders + Generate button
+
+Hook UI → packObjects → redraw instanced mesh
+
+Phase 5 — Debug Tools
+
+Show stats HUD
+
+Add console test function
+
+🏎️ Performance Expectations
+
+200–300 objects at 60 FPS is realistic
+
+Spatial grid → O(n) behavior
+
+InstancedMesh → 1 draw call
+
+No complex geometry intersections
+
+📦 Future Extensions (not required now)
+
+Physics-based settling (Cannon.js / Rapier)
+
+Export as GLTF/OBJ
+
+Packing of arbitrary polyhedra
+
+Texture / material switching
+
+Automatic density measurement
+
+Multi-container packing
+
+✔️ Final Reminder for Codex
+
+Always prioritize correctness, clarity, and predictable behavior over optimization or complex tricks.
+Follow the Power-of-Ten rules.
+Follow the module boundaries.
+Never mix logic and rendering.
+Never skip the spatial grid.
+Never generate deeply nested code.
