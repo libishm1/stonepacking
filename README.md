@@ -1,6 +1,7 @@
 # stonepacking
 
 Browser-based stone packing tool that ports the StonePacking logic into a Three.js + TypeScript app. It packs convex shapes (dodecahedrons or brick blocks) into an axis-aligned container with grid-accelerated collision checks, masonry-style layering, multi-pass packing, and a physics settle phase for denser fills.
+try here https://libishm1.github.io/stonepacking/
 
 ## Features
 - Three.js instanced rendering with shape toggle (dodecahedron or brick) and wireframe container.
